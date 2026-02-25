@@ -21,8 +21,15 @@ function resolveDbPath() {
     return fromEnv;
   }
 
-  // Default to a db file inside backend folder for local development.
-  return path.join(process.cwd(), 'todo.db');
+  /**
+   * Default integration path:
+   * The project includes a dedicated SQLite "database" container which initializes
+   * its DB at: simple-to-do-list-.../database/myapp.db
+   *
+   * Using a deterministic absolute-ish path (from this backend container) makes local/dev
+   * end-to-end flow work without requiring extra env wiring.
+   */
+  return path.resolve(__dirname, '../../../../simple-to-do-list-228918-228934/database/myapp.db');
 }
 
 /**

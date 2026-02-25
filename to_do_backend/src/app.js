@@ -13,10 +13,33 @@ initDb().catch((err) => {
   console.error('Failed to initialize SQLite schema:', err);
 });
 
+/**
+ * CORS:
+ * - Allows the React frontend to call this API cross-origin.
+ * - Uses CORS_ALLOWED_ORIGINS (comma-separated) when provided.
+ * - Falls back to permissive behavior for development environments.
+ *
+ * Env var to request from orchestrator/user:
+ *   CORS_ALLOWED_ORIGINS=https://<frontend-host>,http://localhost:3000
+ */
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: '*',
+  origin: (origin, cb) => {
+    // Non-browser clients (curl, server-to-server) may not send Origin.
+    if (!origin) return cb(null, true);
+
+    // If not configured, allow all (dev-friendly).
+    if (allowedOrigins.length === 0) return cb(null, true);
+
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'), false);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.set('trust proxy', true);
 
